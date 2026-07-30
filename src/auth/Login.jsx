@@ -117,7 +117,7 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-8 text-center text-sm text-blue-900">
+          <div className="mt-8 text-center text-sm text-blue-500">
             © {new Date().getFullYear()} City Mega Church
           </div>
 
