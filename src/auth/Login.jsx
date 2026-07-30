@@ -61,17 +61,17 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md rounded-2xl shadow-xl border-0">
+      <Card className="w-full max-w-md rounded-2xl shadow-xl border-2 border-red-900">
         <CardContent className="p-8">
 
           <div className="flex flex-col items-center mb-8">
             <div className="bg-blue-600 p-4 rounded-full mb-4">
               <Church className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-slate-800">
+            <h1 className="text-3xl font-bold text-blue-800">
               City Mega Church
             </h1>
-            <p className="text-slate-500 mt-2">
+            <p className="text-red-900 mt-2 ">
               Evangelism Records
             </p>
           </div>
@@ -82,7 +82,7 @@ export default function Login() {
               <Input
                 type="email"
                 placeholder="Enter your email"
-                className="mt-2 h-11"
+                className="mt-2 h-11 border-2 border-red-900"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -94,7 +94,7 @@ export default function Login() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className="h-11 pr-10"
+                  className="h-11 pr-10 border-2 border-red-900"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -117,7 +117,7 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-8 text-center text-sm text-slate-500">
+          <div className="mt-8 text-center text-sm text-blue-900">
             © {new Date().getFullYear()} City Mega Church
           </div>
 
