@@ -132,19 +132,19 @@ export default function FollowUps() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
 
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-xl md:text-2xl font-bold text-slate-800">
           Follow Ups
         </h1>
-        <p className="text-slate-500 mt-1">
+        <p className="text-slate-500 mt-1 text-sm md:text-base">
           Visitors who still need a follow-up.
         </p>
       </div>
 
       <Card className="border-0 shadow-sm rounded-2xl">
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
 
           {loading ? (
             <p className="text-sm text-slate-500">Loading...</p>
@@ -157,9 +157,9 @@ export default function FollowUps() {
               {visitors.map((visitor) => (
                 <div key={visitor.id} className="py-5 space-y-3">
 
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                      <p className="font-medium text-slate-800">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-800 break-words">
                         {visitor.fullName || "Unnamed Visitor"}
                       </p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
@@ -170,21 +170,21 @@ export default function FollowUps() {
                           </span>
                         )}
                         {visitor.address && (
-                          <span className="flex items-center gap-1.5">
-                            <MapPin size={13} />
+                          <span className="flex items-center gap-1.5 break-words">
+                            <MapPin size={13} className="shrink-0" />
                             {visitor.address}
                           </span>
                         )}
                       </div>
                       {visitor.prayerRequest && (
-                        <p className="text-sm text-slate-400 mt-1 italic max-w-md">
+                        <p className="text-sm text-slate-400 mt-1 italic max-w-md break-words">
                           "{visitor.prayerRequest}"
                         </p>
                       )}
                     </div>
 
                     <span
-                      className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap self-start ${
                         STATUS_COLORS[visitor.followUpStatus] ||
                         "bg-slate-100 text-slate-600"
                       }`}
@@ -193,16 +193,16 @@ export default function FollowUps() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3">
 
-                    <div className="relative">
+                    <div className="relative w-full xs:w-auto">
                       <select
                         value={visitor.followUpStatus || DEFAULT_STATUS}
                         onChange={(e) =>
                           handleStatusChange(visitor.id, e.target.value)
                         }
                         disabled={updatingId === visitor.id}
-                        className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50"
+                        className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 w-full xs:w-auto"
                       >
                         {STATUS_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -226,7 +226,7 @@ export default function FollowUps() {
                           ? "Update the follow-up status before marking complete"
                           : undefined
                       }
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-50"
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-50 w-full xs:w-auto"
                     >
                       <CheckCircle2 size={16} />
                       {updatingId === visitor.id

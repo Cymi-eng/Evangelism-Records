@@ -68,7 +68,7 @@ export default function SheetDetail() {
   }, [sheetId]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
 
       <button
         onClick={() => navigate("/leader/history")}
@@ -79,10 +79,10 @@ export default function SheetDetail() {
       </button>
 
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-xl md:text-2xl font-bold text-slate-800 break-words">
           {loadingSheet ? "Loading..." : sheet?.groupName || "Unnamed Group"}
         </h1>
-        <p className="text-slate-500 mt-1">
+        <p className="text-slate-500 mt-1 text-sm md:text-base">
           {loadingSheet
             ? ""
             : `${sheet?.date} · ${sheet?.day} · Led by ${sheet?.leaderName}`}
@@ -90,9 +90,9 @@ export default function SheetDetail() {
       </div>
 
       <Card className="border-0 shadow-sm rounded-2xl">
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
 
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">
+          <h2 className="text-base md:text-lg font-semibold text-slate-800 mb-4">
             Visitors Recorded
           </h2>
 
@@ -106,13 +106,13 @@ export default function SheetDetail() {
             <div className="divide-y divide-slate-100">
               {visitors.map((visitor) => (
                 <div key={visitor.id} className="py-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-slate-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <p className="font-medium text-slate-800 break-words min-w-0">
                       {visitor.fullName || "Unnamed Visitor"}
                     </p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <span
-                        className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${
                           visitor.acceptedJesus === "Yes"
                             ? "bg-emerald-100 text-emerald-700"
                             : "bg-slate-100 text-slate-500"
@@ -123,7 +123,7 @@ export default function SheetDetail() {
                           : "Not Yet"}
                       </span>
                       <span
-                        className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${
                           visitor.willCome === "Yes"
                             ? "bg-blue-100 text-blue-700"
                             : "bg-slate-100 text-slate-500"
@@ -142,15 +142,15 @@ export default function SheetDetail() {
                       </span>
                     )}
                     {visitor.address && (
-                      <span className="flex items-center gap-1.5">
-                        <MapPin size={13} />
+                      <span className="flex items-center gap-1.5 break-words">
+                        <MapPin size={13} className="shrink-0" />
                         {visitor.address}
                       </span>
                     )}
                   </div>
 
                   {visitor.prayerRequest && (
-                    <p className="text-sm text-slate-400 mt-1.5 italic">
+                    <p className="text-sm text-slate-400 mt-1.5 italic break-words">
                       "{visitor.prayerRequest}"
                     </p>
                   )}

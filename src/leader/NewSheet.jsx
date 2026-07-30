@@ -176,23 +176,23 @@ export default function NewSheet() {
   // ---- Stage 1: Sheet setup ----
   if (stage === "setup") {
     return (
-      <div className="space-y-8 max-w-2xl">
+      <div className="space-y-6 md:space-y-8 max-w-2xl">
 
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800">
             New Evangelism Sheet
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 mt-1 text-sm md:text-base">
             Start a new sheet before recording visitors.
           </p>
         </div>
 
         <Card className="border-0 shadow-sm rounded-2xl">
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
 
             <form onSubmit={handleStartRecording} className="space-y-5">
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <Label>Date</Label>
                   <Input
@@ -255,19 +255,19 @@ export default function NewSheet() {
 
   // ---- Stage 2: Recording visitors ----
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="space-y-6 md:space-y-8 max-w-2xl">
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800 break-words">
             {groupName}
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 mt-1 text-sm md:text-base">
             {todayDate()} · {todayDay()}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-sm font-medium text-slate-600 bg-white px-4 py-2 rounded-lg border border-slate-200">
+        <div className="flex items-center gap-2 text-sm font-medium text-slate-600 bg-white px-4 py-2 rounded-lg border border-slate-200 self-start sm:self-auto shrink-0">
           <Users size={16} />
           {visitorCount} recorded
         </div>
@@ -275,7 +275,7 @@ export default function NewSheet() {
 
       {justSaved ? (
         <Card className="border-0 shadow-sm rounded-2xl">
-          <CardContent className="p-8 text-center space-y-6">
+          <CardContent className="p-6 md:p-8 text-center space-y-6">
 
             <div className="flex flex-col items-center gap-3">
               <div className="bg-emerald-100 p-3 rounded-full">
@@ -311,7 +311,7 @@ export default function NewSheet() {
         </Card>
       ) : (
         <Card className="border-0 shadow-sm rounded-2xl">
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
 
             <form onSubmit={handleSaveVisitor} className="space-y-5">
 

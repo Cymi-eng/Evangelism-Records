@@ -151,36 +151,36 @@ export default function LeaderDashboard() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800">
             Welcome back{user?.email ? `, ${user.email.split("@")[0]}` : ""}
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 mt-1 text-sm md:text-base">
             Here's an overview of your evangelism records.
           </p>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-col xs:flex-row gap-2 flex-wrap sm:justify-end">
           <button
             onClick={() => navigate("/leader/new-sheet")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors w-full sm:w-auto"
           >
             <PlusCircle size={16} />
             New Evangelism Sheet
           </button>
           <button
             onClick={() => navigate("/leader/follow-ups")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors w-full sm:w-auto"
           >
             <ClipboardList size={16} />
             Follow Ups
           </button>
           <button
             onClick={() => navigate("/leader/history")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors w-full sm:w-auto"
           >
             <HistoryIcon size={16} />
             History
@@ -192,15 +192,15 @@ export default function LeaderDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map(({ label, value, icon: Icon, color, loading }) => (
           <Card key={label} className="border-0 shadow-sm rounded-2xl">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className={`${color} p-3 rounded-xl`}>
+            <CardContent className="p-4 md:p-5 flex items-center gap-4">
+              <div className={`${color} p-3 rounded-xl shrink-0`}>
                 <Icon className="w-5 h-5 text-white" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-2xl font-bold text-slate-800">
                   {loading ? "—" : value}
                 </p>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 truncate">
                   {label}
                 </p>
               </div>
@@ -211,15 +211,15 @@ export default function LeaderDashboard() {
 
       {/* Recent evangelism sheets — row list, no table */}
       <Card className="border-0 shadow-sm rounded-2xl">
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
 
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-800">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <h2 className="text-base md:text-lg font-semibold text-slate-800">
               Recent Evangelism Sheets
             </h2>
             <button
               onClick={() => navigate("/leader/history")}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 shrink-0"
             >
               View all
             </button>
@@ -236,18 +236,18 @@ export default function LeaderDashboard() {
               {recentSheets.map((sheet) => (
                 <div
                   key={sheet.id}
-                  className="flex items-center justify-between py-3"
+                  className="flex items-center justify-between gap-3 py-3"
                 >
-                  <div>
-                    <p className="font-medium text-slate-800">
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-800 truncate">
                       {sheet.groupName || "Unnamed Group"}
                     </p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 truncate">
                       {sheet.date} · {sheet.day}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <div className="flex items-center gap-2 text-sm text-slate-500 shrink-0">
                     <Users size={14} />
                     {sheet.visitorCount} visitor{sheet.visitorCount === 1 ? "" : "s"}
                   </div>

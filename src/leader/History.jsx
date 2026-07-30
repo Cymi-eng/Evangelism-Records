@@ -77,19 +77,19 @@ export default function History() {
   }));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
 
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-xl md:text-2xl font-bold text-slate-800">
           History
         </h1>
-        <p className="text-slate-500 mt-1">
+        <p className="text-slate-500 mt-1 text-sm md:text-base">
           Your past evangelism sheets.
         </p>
       </div>
 
       <Card className="border-0 shadow-sm rounded-2xl">
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
 
           {loading ? (
             <p className="text-sm text-slate-500">Loading...</p>
@@ -102,19 +102,19 @@ export default function History() {
               {sheetsWithCounts.map((sheet) => (
                 <div
                   key={sheet.id}
-                  className="flex items-center justify-between py-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4"
                 >
-                  <div>
-                    <p className="font-medium text-slate-800">
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-800 break-words">
                       {sheet.groupName || "Unnamed Group"}
                     </p>
                     <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-0.5">
-                      <CalendarDays size={14} />
+                      <CalendarDays size={14} className="shrink-0" />
                       {sheet.date} · {sheet.day}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
                     <div className="flex items-center gap-1.5 text-sm text-slate-500">
                       <Users size={14} />
                       {sheet.visitorCount} visitor{sheet.visitorCount === 1 ? "" : "s"}
