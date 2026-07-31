@@ -1,25 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   collection,
   query,
   orderBy,
   onSnapshot,
-  doc,
-  deleteDoc,
 } from "firebase/firestore";
-import { Search, Trash2, Phone } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { Search, Phone, MapPin, ChevronDown } from "lucide-react";
 
 import { db } from "@/config/firebase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
+const DAYS = [
+  "Sunday", "Monday", "Tuesday", "Wednesday",
+  "Thursday", "Friday", "Saturday",
+];
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 export default function Visitors() {
   const [visitors, setVisitors] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [sheets, setSheets] = useState([]);
+  const [loadingVisitors, setLoadingVisitors] = useState(true);
+  const [loadingSheets, setLoadingSheets] = useState(true);
+
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [deletingId, setDeletingId] = useState(null);
+  const [dayFilter, setDayFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [leaderFilter, setLeaderFilter] = useState("all");
 
   useEffect(() => {
     const visitorsRef = collection(db, "visitors");
@@ -33,53 +44,90 @@ export default function Visitors() {
           ...docSnap.data(),
         }));
         setVisitors(data);
-        setLoading(false);
+        setLoadingVisitors(false);
       },
       (error) => {
         console.error("Error loading visitors:", error);
-        setLoading(false);
+        setLoadingVisitors(false);
       }
     );
 
     return () => unsubscribe();
   }, []);
 
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm(
-      "Delete this visitor record? This cannot be undone."
+  // Sheets are needed to resolve sheetId -> day/leaderName/groupName for filtering
+  useEffect(() => {
+    const sheetsRef = collection(db, "evangelismSheets");
+
+    const unsubscribe = onSnapshot(
+      sheetsRef,
+      (snapshot) => {
+        const data = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+        setSheets(data);
+        setLoadingSheets(false);
+      },
+      (error) => {
+        console.error("Error loading sheets:", error);
+        setLoadingSheets(false);
+      }
     );
-    if (!confirmed) return;
 
-    try {
-      setDeletingId(id);
-      await deleteDoc(doc(db, "visitors", id));
-      toast.success("Visitor record deleted.");
-    } catch (error) {
-      console.error("Error deleting visitor:", error);
-      toast.error("Failed to delete. Please try again.");
-    } finally {
-      setDeletingId(null);
-    }
-  };
+    return () => unsubscribe();
+  }, []);
 
-  const filteredVisitors = visitors.filter((visitor) => {
+  const sheetsById = useMemo(() => {
+    const map = {};
+    sheets.forEach((sheet) => {
+      map[sheet.id] = sheet;
+    });
+    return map;
+  }, [sheets]);
+
+  const leaderNames = useMemo(() => {
+    const names = new Set();
+    sheets.forEach((sheet) => {
+      if (sheet.leaderName) names.add(sheet.leaderName);
+    });
+    return Array.from(names).sort();
+  }, [sheets]);
+
+  const enrichedVisitors = useMemo(() => {
+    return visitors.map((visitor) => {
+      const sheet = sheetsById[visitor.sheetId];
+      return {
+        ...visitor,
+        groupName: sheet?.groupName || "Unknown Group",
+        day: sheet?.day || null,
+        date: sheet?.date || null,
+        leaderName: sheet?.leaderName || "Unknown Leader",
+      };
+    });
+  }, [visitors, sheetsById]);
+
+  const filteredVisitors = enrichedVisitors.filter((visitor) => {
     const term = search.trim().toLowerCase();
     const matchesSearch =
       !term ||
       visitor.fullName?.toLowerCase().includes(term) ||
       visitor.phone?.toLowerCase().includes(term);
 
-    const matchesStatus =
-      statusFilter === "all" || visitor.status === statusFilter;
+    const matchesDay = dayFilter === "all" || visitor.day === dayFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesMonth =
+      monthFilter === "all" ||
+      (visitor.date &&
+        MONTHS[new Date(visitor.date).getMonth()] === monthFilter);
+
+    const matchesLeader =
+      leaderFilter === "all" || visitor.leaderName === leaderFilter;
+
+    return matchesSearch && matchesDay && matchesMonth && matchesLeader;
   });
 
-  const filters = [
-    { label: "All", value: "all" },
-    { label: "New", value: "new" },
-    { label: "Returning", value: "returning" },
-  ];
+  const loading = loadingVisitors || loadingSheets;
 
   return (
     <div className="space-y-8">
@@ -93,7 +141,7 @@ export default function Visitors() {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+      <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
 
         <div className="relative max-w-sm w-full">
           <Search
@@ -109,20 +157,50 @@ export default function Visitors() {
           />
         </div>
 
-        <div className="flex gap-2">
-          {filters.map(({ label, value }) => (
-            <button
-              key={value}
-              onClick={() => setStatusFilter(value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                statusFilter === value
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-              }`}
+        <div className="flex gap-2 flex-wrap">
+
+          <div className="relative">
+            <select
+              value={dayFilter}
+              onChange={(e) => setDayFilter(e.target.value)}
+              className="appearance-none h-11 pl-3 pr-8 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
-              {label}
-            </button>
-          ))}
+              <option value="all">All Days</option>
+              {DAYS.map((day) => (
+                <option key={day} value={day}>{day}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+
+          <div className="relative">
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="appearance-none h-11 pl-3 pr-8 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            >
+              <option value="all">All Months</option>
+              {MONTHS.map((month) => (
+                <option key={month} value={month}>{month}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+
+          <div className="relative">
+            <select
+              value={leaderFilter}
+              onChange={(e) => setLeaderFilter(e.target.value)}
+              className="appearance-none h-11 pl-3 pr-8 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            >
+              <option value="all">All Leaders</option>
+              {leaderNames.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+
         </div>
 
       </div>
@@ -134,63 +212,68 @@ export default function Visitors() {
             <p className="text-sm text-slate-500">Loading...</p>
           ) : filteredVisitors.length === 0 ? (
             <p className="text-sm text-slate-500">
-              No visitors match your search.
+              No visitors match your filters.
             </p>
           ) : (
             <div className="divide-y divide-slate-100">
               {filteredVisitors.map((visitor) => (
-                <div
-                  key={visitor.id}
-                  className="flex items-center justify-between py-4"
-                >
-                  <div>
-                    <p className="font-medium text-slate-800">
-                      {visitor.fullName || "Unnamed Visitor"}
-                    </p>
-                    <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-0.5">
-                      <Phone size={14} />
-                      {visitor.phone || "No phone provided"}
-                    </div>
-                  </div>
+                <div key={visitor.id} className="py-4">
 
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="flex items-center gap-2 justify-end">
-                        <span
-                          className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                            visitor.status === "returning"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {visitor.status === "returning" ? "Returning" : "New"}
-                        </span>
-                        <span
-                          className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                            visitor.followedUp
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {visitor.followedUp ? "Followed Up" : "Pending"}
-                        </span>
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                      <p className="font-medium text-slate-800">
+                        {visitor.fullName || "Unnamed Visitor"}
+                      </p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
+                        {visitor.phone && (
+                          <span className="flex items-center gap-1.5">
+                            <Phone size={13} />
+                            {visitor.phone}
+                          </span>
+                        )}
+                        {visitor.address && (
+                          <span className="flex items-center gap-1.5">
+                            <MapPin size={13} />
+                            {visitor.address}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-400 mt-1">
-                        {visitor.createdAt?.toDate
-                          ? visitor.createdAt.toDate().toLocaleDateString()
-                          : ""}
+                        {visitor.groupName} · {visitor.date} ({visitor.day}) · Led by {visitor.leaderName}
                       </p>
                     </div>
 
-                    <button
-                      onClick={() => handleDelete(visitor.id)}
-                      disabled={deletingId === visitor.id}
-                      className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                      title="Delete visitor"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      <span
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                          visitor.acceptedJesus === "Yes"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {visitor.acceptedJesus === "Yes" ? "Accepted Jesus" : "Not Yet"}
+                      </span>
+                      <span
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                          visitor.willCome === "Yes"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {visitor.willCome === "Yes" ? "Coming Sunday" : "Not Confirmed"}
+                      </span>
+                      <span
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                          visitor.followUpCompleted
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {visitor.followUpCompleted ? "Follow-up Done" : visitor.followUpStatus || "Pending"}
+                      </span>
+                    </div>
                   </div>
+
                 </div>
               ))}
             </div>
