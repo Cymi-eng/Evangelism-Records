@@ -16,10 +16,11 @@ import {
 import { db } from "@/config/firebase";
 import { Card, CardContent } from "@/components/ui/card";
 
-const INK = "#12151C";
-const BLUE = "#1B2A4E";
-const BLUE_LIGHT = "#5B8DEF";
-const RED = "#B42D3A";
+// Aligned with AdminLayout's palette: navy + white + red + electric blue.
+const NAVY = "#101B3D";
+const NAVY_PANEL = "#1B2A5C";
+const BLUE_LIGHT = "#2F6FED"; // electric blue — was #5B8DEF
+const RED = "#E11D2E"; // was #B42D3A
 
 function getLastNDays(n) {
   const days = [];
@@ -116,7 +117,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { label: "Total Visitors", value: totalVisitors, icon: Users },
-    { label: "Accepted Jesus", value: acceptedJesus, icon: Sparkles, accent: BLUE },
+    { label: "Accepted Jesus", value: acceptedJesus, icon: Sparkles, accent: BLUE_LIGHT },
     { label: "Promised to Come", value: promisedToCome, icon: CalendarCheck },
     { label: "Completed Follow-ups", value: completedFollowUps, icon: CheckCircle2 },
     { label: "Pending Follow-ups", value: pendingFollowUps, icon: Clock, accent: RED },
@@ -180,7 +181,7 @@ export default function AdminDashboard() {
     <div className="space-y-8">
 
       <div>
-        <h1 className="font-serif text-2xl font-semibold text-slate-900">
+        <h1 className="font-['Fraunces',serif] text-2xl font-semibold" style={{ color: NAVY }}>
           Admin Overview
         </h1>
         <p className="text-slate-500 mt-1">
@@ -203,7 +204,7 @@ export default function AdminDashboard() {
                 </p>
                 <Icon size={16} className="text-slate-400" />
               </div>
-              <p className="font-serif text-3xl font-semibold text-slate-900 tabular-nums">
+              <p className="font-['Fraunces',serif] text-3xl font-semibold tabular-nums" style={{ color: NAVY }}>
                 {loading ? "—" : value}
               </p>
             </CardContent>
@@ -217,7 +218,7 @@ export default function AdminDashboard() {
         <Card className="border border-slate-200 shadow-none rounded-md lg:col-span-2">
           <CardContent className="p-6">
             <div className="flex items-baseline justify-between mb-6">
-              <h2 className="font-serif text-lg font-semibold text-slate-900">
+              <h2 className="font-['Fraunces',serif] text-lg font-semibold" style={{ color: NAVY }}>
                 Visitors Recorded — Last 7 Days
               </h2>
               <p className="text-sm text-slate-500 tabular-nums">
@@ -238,7 +239,7 @@ export default function AdminDashboard() {
                       className="w-full max-w-[28px] rounded-t-sm transition-all"
                       style={{
                         height: `${Math.max((d.visitors / maxDaily) * 130, 4)}px`,
-                        backgroundColor: i === dailyData.length - 1 ? RED : BLUE,
+                        backgroundColor: i === dailyData.length - 1 ? RED : BLUE_LIGHT,
                       }}
                     />
                     <span className="text-[10px] uppercase tracking-wide text-slate-400">
@@ -253,7 +254,7 @@ export default function AdminDashboard() {
 
         <Card className="border border-slate-200 shadow-none rounded-md">
           <CardContent className="p-6 flex flex-col items-center">
-            <h2 className="font-serif text-lg font-semibold text-slate-900 self-start mb-6">
+            <h2 className="font-['Fraunces',serif] text-lg font-semibold self-start mb-6" style={{ color: NAVY }}>
               Accepted Jesus
             </h2>
 
@@ -277,7 +278,7 @@ export default function AdminDashboard() {
                       cx="70"
                       cy="70"
                       r={ringRadius}
-                      stroke={BLUE}
+                      stroke={BLUE_LIGHT}
                       strokeWidth="12"
                       fill="none"
                       strokeLinecap="round"
@@ -285,7 +286,7 @@ export default function AdminDashboard() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-serif text-3xl font-semibold text-slate-900 tabular-nums">
+                    <span className="font-['Fraunces',serif] text-3xl font-semibold tabular-nums" style={{ color: NAVY }}>
                       {acceptedPct}%
                     </span>
                   </div>
@@ -294,7 +295,7 @@ export default function AdminDashboard() {
                 <div className="w-full mt-6 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2 text-slate-600">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BLUE }} />
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BLUE_LIGHT }} />
                       Accepted
                     </span>
                     <span className="font-medium text-slate-800 tabular-nums">{acceptedJesus}</span>
@@ -321,7 +322,7 @@ export default function AdminDashboard() {
 
         <Card className="border border-slate-200 shadow-none rounded-md">
           <CardContent className="p-6">
-            <h2 className="font-serif text-lg font-semibold text-slate-900 mb-5">
+            <h2 className="font-['Fraunces',serif] text-lg font-semibold mb-5" style={{ color: NAVY }}>
               Follow-up Status Breakdown
             </h2>
 
@@ -366,7 +367,7 @@ export default function AdminDashboard() {
 
         <Card className="border border-slate-200 shadow-none rounded-md">
           <CardContent className="p-6">
-            <h2 className="font-serif text-lg font-semibold text-slate-900 mb-5">
+            <h2 className="font-['Fraunces',serif] text-lg font-semibold mb-5" style={{ color: NAVY }}>
               Top Leaders by Visitors Recorded
             </h2>
 
@@ -380,7 +381,7 @@ export default function AdminDashboard() {
                   <div key={leader.leaderName}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="flex items-center gap-2.5 text-sm text-slate-700">
-                        <span className="font-serif text-xs text-slate-400 tabular-nums w-4">
+                        <span className="font-['Fraunces',serif] text-xs text-slate-400 tabular-nums w-4">
                           {String(index + 1).padStart(2, "0")}
                         </span>
                         {leader.leaderName}
@@ -394,7 +395,7 @@ export default function AdminDashboard() {
                         className="h-full rounded-full"
                         style={{
                           width: `${(leader.count / maxLeaderCount) * 100}%`,
-                          backgroundColor: index === 0 ? RED : BLUE,
+                          backgroundColor: index === 0 ? RED : BLUE_LIGHT,
                         }}
                       />
                     </div>
@@ -411,7 +412,7 @@ export default function AdminDashboard() {
       <Card className="border border-slate-200 shadow-none rounded-md">
         <CardContent className="p-6">
 
-          <h2 className="font-serif text-lg font-semibold text-slate-900 mb-4">
+          <h2 className="font-['Fraunces',serif] text-lg font-semibold mb-4" style={{ color: NAVY }}>
             Recent Visitors
           </h2>
 
@@ -448,11 +449,12 @@ export default function AdminDashboard() {
                       {visitor.acceptedJesus === "Yes" ? "Accepted" : "Not Yet"}
                     </span>
                     <span
-                      className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                      className="text-xs font-medium px-2.5 py-1 rounded-full"
+                      style={
                         visitor.followUpCompleted
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-amber-100 text-amber-700"
-                      }`}
+                          ? { backgroundColor: `${BLUE_LIGHT}1A`, color: BLUE_LIGHT }
+                          : { backgroundColor: `${RED}1A`, color: RED }
+                      }
                     >
                       {visitor.followUpCompleted ? "Completed" : "Pending"}
                     </span>
