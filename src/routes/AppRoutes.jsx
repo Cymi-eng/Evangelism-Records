@@ -13,8 +13,7 @@ import SheetDetail from "@/leader/SheetDetail";
 
 import AdminLayout from "@/layouts/AdminLayout";
 import AdminDashboard from "@/pages/admin/Dashboard";
-import Visitors from "@/pages/admin/Visitors";
-import Reports from "@/pages/admin/Reports";
+import Members from "@/pages/admin/Members";
 import Users from "@/pages/admin/Users";
 
 export default function AppRoutes() {
@@ -86,8 +85,7 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<AdminDashboard />} />
-        <Route path="visitors" element={<Visitors />} />
-        <Route path="reports" element={<Reports />} />
+       <Route path="members" element={<Members />} />
         <Route path="users" element={<Users />} />
       </Route>
 

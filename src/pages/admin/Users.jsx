@@ -70,18 +70,18 @@ export default function Users() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
 
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-xl md:text-2xl font-bold text-slate-800">
           Users
         </h1>
-        <p className="text-slate-500 mt-1">
+        <p className="text-slate-500 mt-1 text-sm md:text-base">
           Manage leader and admin accounts.
         </p>
       </div>
 
-      <div className="relative max-w-sm">
+      <div className="relative max-w-sm w-full">
         <Search
           size={16}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -96,7 +96,7 @@ export default function Users() {
       </div>
 
       <Card className="border-0 shadow-sm rounded-2xl">
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
 
           {loading ? (
             <p className="text-sm text-slate-500">Loading...</p>
@@ -109,11 +109,11 @@ export default function Users() {
               {filteredUsers.map((u) => (
                 <div
                   key={u.id}
-                  className="flex items-center justify-between py-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`p-2.5 rounded-full ${
+                      className={`p-2.5 rounded-full shrink-0 ${
                         u.role === "admin" ? "bg-blue-100" : "bg-slate-100"
                       }`}
                     >
@@ -124,19 +124,19 @@ export default function Users() {
                       )}
                     </div>
 
-                    <div>
-                      <p className="font-medium text-slate-800">
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-800 truncate">
                         {u.fullName || "Unnamed User"}
                       </p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-500 truncate">
                         {u.email || "No email"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
                     <span
-                      className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize whitespace-nowrap ${
                         u.role === "admin"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-slate-100 text-slate-600"
@@ -148,7 +148,7 @@ export default function Users() {
                     <button
                       onClick={() => toggleRole(u.id, u.role)}
                       disabled={updatingId === u.id}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50 whitespace-nowrap"
                     >
                       {updatingId === u.id
                         ? "Updating..."

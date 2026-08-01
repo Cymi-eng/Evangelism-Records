@@ -49,28 +49,28 @@ const STATUS_COLORS = {
 };
 
 export default function AdminDashboard() {
-  const [visitors, setVisitors] = useState([]);
+  const [members, setMembers] = useState([]);
   const [sheets, setSheets] = useState([]);
-  const [loadingVisitors, setLoadingVisitors] = useState(true);
+  const [loadingMembers, setLoadingMembers] = useState(true);
   const [loadingSheets, setLoadingSheets] = useState(true);
 
   useEffect(() => {
-    const visitorsRef = collection(db, "visitors");
-    const visitorsQuery = query(visitorsRef, orderBy("createdAt", "desc"));
+    const membersRef = collection(db, "members");
+    const membersQuery = query(membersRef, orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(
-      visitorsQuery,
+      membersQuery,
       (snapshot) => {
         const data = snapshot.docs.map((docSnap) => ({
           id: docSnap.id,
           ...docSnap.data(),
         }));
-        setVisitors(data);
-        setLoadingVisitors(false);
+        setMembers(data);
+        setLoadingMembers(false);
       },
       (error) => {
-        console.error("Error loading visitors:", error);
-        setLoadingVisitors(false);
+        console.error("Error loading members:", error);
+        setLoadingMembers(false);
       }
     );
 
@@ -107,52 +107,52 @@ export default function AdminDashboard() {
     return map;
   }, [sheets]);
 
-  const loading = loadingVisitors || loadingSheets;
+  const loading = loadingMembers || loadingSheets;
 
-  const totalVisitors = visitors.length;
-  const acceptedJesus = visitors.filter((v) => v.acceptedJesus === "Yes").length;
-  const promisedToCome = visitors.filter((v) => v.willCome === "Yes").length;
-  const completedFollowUps = visitors.filter((v) => v.followUpCompleted).length;
-  const pendingFollowUps = totalVisitors - completedFollowUps;
+  const totalMembers = members.length;
+  const acceptedJesus = members.filter((m) => m.acceptedJesus === "Yes").length;
+  const promisedToCome = members.filter((m) => m.willCome === "Yes").length;
+  const completedFollowUps = members.filter((m) => m.followUpCompleted).length;
+  const pendingFollowUps = totalMembers - completedFollowUps;
 
   const stats = [
-    { label: "Total Visitors", value: totalVisitors, icon: Users },
+    { label: "Total Souls", value: totalMembers, icon: Users },
     { label: "Accepted Jesus", value: acceptedJesus, icon: Sparkles, accent: BLUE_LIGHT },
     { label: "Promised to Come", value: promisedToCome, icon: CalendarCheck },
     { label: "Completed Follow-ups", value: completedFollowUps, icon: CheckCircle2 },
     { label: "Pending Follow-ups", value: pendingFollowUps, icon: Clock, accent: RED },
   ];
 
-  const recentVisitors = visitors.slice(0, 8);
+  const recentMembers = members.slice(0, 8);
 
-  // --- Weekly visitors (custom bar column, no chart library) ---
+  // --- Weekly members (custom bar column, no chart library) ---
 
   const last7Days = getLastNDays(7);
   const dailyData = last7Days.map((day) => {
     const nextDay = new Date(day);
     nextDay.setDate(day.getDate() + 1);
-    const count = visitors.filter((v) => {
-      if (!v.createdAt?.toDate) return false;
-      const created = v.createdAt.toDate();
+    const count = members.filter((m) => {
+      if (!m.createdAt?.toDate) return false;
+      const created = m.createdAt.toDate();
       return created >= day && created < nextDay;
     }).length;
-    return { day: formatDayLabel(day), visitors: count };
+    return { day: formatDayLabel(day), members: count };
   });
-  const maxDaily = Math.max(...dailyData.map((d) => d.visitors), 1);
-  const weekTotal = dailyData.reduce((sum, d) => sum + d.visitors, 0);
+  const maxDaily = Math.max(...dailyData.map((d) => d.members), 1);
+  const weekTotal = dailyData.reduce((sum, d) => sum + d.members, 0);
 
   // --- Accepted Jesus (progress ring, no pie chart) ---
 
   const acceptedPct =
-    totalVisitors === 0 ? 0 : Math.round((acceptedJesus / totalVisitors) * 100);
+    totalMembers === 0 ? 0 : Math.round((acceptedJesus / totalMembers) * 100);
   const ringRadius = 52;
   const circumference = 2 * Math.PI * ringRadius;
   const ringDash = (acceptedPct / 100) * circumference;
 
   // --- Follow-up status (stacked ledger bar, no chart library) ---
 
-  const statusCounts = visitors.reduce((acc, v) => {
-    const key = v.followUpStatus || "Still Following Up";
+  const statusCounts = members.reduce((acc, m) => {
+    const key = m.followUpStatus || "Still Following Up";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
@@ -163,8 +163,8 @@ export default function AdminDashboard() {
 
   // --- Top leaders (ranked ledger, no chart library) ---
 
-  const leaderCounts = visitors.reduce((acc, v) => {
-    const sheet = sheetsById[v.sheetId];
+  const leaderCounts = members.reduce((acc, m) => {
+    const sheet = sheetsById[m.sheetId];
     const name = sheet?.leaderName || "Unknown Leader";
     acc[name] = (acc[name] || 0) + 1;
     return acc;
@@ -219,7 +219,7 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-baseline justify-between mb-6">
               <h2 className="font-['Fraunces',serif] text-lg font-semibold" style={{ color: NAVY }}>
-                Visitors Recorded — Last 7 Days
+                Souls Recorded — Last 7 Days
               </h2>
               <p className="text-sm text-slate-500 tabular-nums">
                 {loading ? "" : `${weekTotal} total`}
@@ -233,12 +233,12 @@ export default function AdminDashboard() {
                 {dailyData.map((d, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center justify-end gap-2 h-full">
                     <span className="text-xs font-semibold text-slate-700 tabular-nums">
-                      {d.visitors}
+                      {d.members}
                     </span>
                     <div
                       className="w-full max-w-[28px] rounded-t-sm transition-all"
                       style={{
-                        height: `${Math.max((d.visitors / maxDaily) * 130, 4)}px`,
+                        height: `${Math.max((d.members / maxDaily) * 130, 4)}px`,
                         backgroundColor: i === dailyData.length - 1 ? RED : BLUE_LIGHT,
                       }}
                     />
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
 
             {loading ? (
               <p className="text-sm text-slate-500">Loading...</p>
-            ) : totalVisitors === 0 ? (
+            ) : totalMembers === 0 ? (
               <p className="text-sm text-slate-500">No data yet.</p>
             ) : (
               <>
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
                       Not Yet
                     </span>
                     <span className="font-medium text-slate-800 tabular-nums">
-                      {totalVisitors - acceptedJesus}
+                      {totalMembers - acceptedJesus}
                     </span>
                   </div>
                 </div>
@@ -337,7 +337,7 @@ export default function AdminDashboard() {
                     <div
                       key={entry.status}
                       style={{
-                        width: `${(entry.count / totalVisitors) * 100}%`,
+                        width: `${(entry.count / totalMembers) * 100}%`,
                         backgroundColor: STATUS_COLORS[entry.status] || "#94a3b8",
                       }}
                     />
@@ -355,7 +355,7 @@ export default function AdminDashboard() {
                         {entry.status}
                       </span>
                       <span className="text-sm text-slate-500 tabular-nums">
-                        {entry.count} · {Math.round((entry.count / totalVisitors) * 100)}%
+                        {entry.count} · {Math.round((entry.count / totalMembers) * 100)}%
                       </span>
                     </div>
                   ))}
@@ -368,7 +368,7 @@ export default function AdminDashboard() {
         <Card className="border border-slate-200 shadow-none rounded-md">
           <CardContent className="p-6">
             <h2 className="font-['Fraunces',serif] text-lg font-semibold mb-5" style={{ color: NAVY }}>
-              Top Leaders by Visitors Recorded
+              Top Leaders by Souls Recorded
             </h2>
 
             {loading ? (
@@ -408,55 +408,55 @@ export default function AdminDashboard() {
 
       </div>
 
-      {/* Recent visitors */}
+      {/* Recent members */}
       <Card className="border border-slate-200 shadow-none rounded-md">
         <CardContent className="p-6">
 
           <h2 className="font-['Fraunces',serif] text-lg font-semibold mb-4" style={{ color: NAVY }}>
-            Recent Visitors
+            Recent Souls Recorded
           </h2>
 
           {loading ? (
             <p className="text-sm text-slate-500">Loading...</p>
-          ) : recentVisitors.length === 0 ? (
+          ) : recentMembers.length === 0 ? (
             <p className="text-sm text-slate-500">
-              No visitors recorded yet.
+              No Souls recorded yet.
             </p>
           ) : (
             <div className="divide-y divide-slate-100">
-              {recentVisitors.map((visitor) => (
+              {recentMembers.map((member) => (
                 <div
-                  key={visitor.id}
+                  key={member.id}
                   className="flex items-center justify-between py-3"
                 >
                   <div>
                     <p className="font-medium text-slate-800">
-                      {visitor.fullName || "Unnamed Visitor"}
+                      {member.fullName || "Unnamed Visitor"}
                     </p>
                     <p className="text-sm text-slate-500">
-                      {visitor.phone || "No phone provided"}
+                      {member.phone || "No phone provided"}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                        visitor.acceptedJesus === "Yes"
+                        member.acceptedJesus === "Yes"
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-slate-100 text-slate-500"
                       }`}
                     >
-                      {visitor.acceptedJesus === "Yes" ? "Accepted" : "Not Yet"}
+                      {member.acceptedJesus === "Yes" ? "Accepted" : "Not Yet"}
                     </span>
                     <span
                       className="text-xs font-medium px-2.5 py-1 rounded-full"
                       style={
-                        visitor.followUpCompleted
+                        member.followUpCompleted
                           ? { backgroundColor: `${BLUE_LIGHT}1A`, color: BLUE_LIGHT }
                           : { backgroundColor: `${RED}1A`, color: RED }
                       }
                     >
-                      {visitor.followUpCompleted ? "Completed" : "Pending"}
+                      {member.followUpCompleted ? "Completed" : "Pending"}
                     </span>
                   </div>
                 </div>

@@ -37,24 +37,24 @@ const STATUS_COLORS = {
   "Transferred to Discipleship": "bg-amber-100 text-amber-700",
 };
 
-// A visitor's status counts as "updated" once the leader has moved it
+// A member's status counts as "updated" once the leader has moved it
 // off the default value. Until then, the follow-up can't be marked complete.
-const isStatusUpdated = (visitor) =>
-  Boolean(visitor.followUpStatus) && visitor.followUpStatus !== DEFAULT_STATUS;
+const isStatusUpdated = (member) =>
+  Boolean(member.followUpStatus) && member.followUpStatus !== DEFAULT_STATUS;
 
 export default function FollowUps() {
   const { user } = useAuth();
 
-  const [visitors, setVisitors] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
     if (!user?.uid) return;
 
-    const visitorsRef = collection(db, "visitors");
+    const membersRef = collection(db, "members");
     const followUpQuery = query(
-      visitorsRef,
+      membersRef,
       where("leaderId", "==", user.uid),
       where("followUpCompleted", "==", false),
       orderBy("createdAt", "desc")
@@ -67,7 +67,7 @@ export default function FollowUps() {
           id: docSnap.id,
           ...docSnap.data(),
         }));
-        setVisitors(data);
+        setMembers(data);
         setLoading(false);
       },
       (error) => {
@@ -79,7 +79,7 @@ export default function FollowUps() {
     return () => unsubscribe();
   }, [user?.uid]);
 
-  const handleStatusChange = async (visitorId, newStatus) => {
+  const handleStatusChange = async (memberId, newStatus) => {
     const updates = { followUpStatus: newStatus };
 
     // Special workflow: transferring to discipleship marks the
@@ -89,43 +89,43 @@ export default function FollowUps() {
     }
 
     // Snapshot the previous state so we can roll back on failure
-    const previous = visitors;
+    const previous = members;
 
     // Optimistic update: reflect the change instantly, don't wait on Firestore
-    setVisitors((prev) =>
-      prev.map((v) => (v.id === visitorId ? { ...v, ...updates } : v))
+    setMembers((prev) =>
+      prev.map((m) => (m.id === memberId ? { ...m, ...updates } : m))
     );
-    setUpdatingId(visitorId);
+    setUpdatingId(memberId);
 
     try {
-      await updateDoc(doc(db, "visitors", visitorId), updates);
+      await updateDoc(doc(db, "members", memberId), updates);
       toast.success(`Status updated to "${newStatus}".`);
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Failed to update status. Please try again.");
-      setVisitors(previous); // roll back
+      setMembers(previous); // roll back
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const markFollowUpComplete = async (visitorId) => {
-    const previous = visitors;
+  const markFollowUpComplete = async (memberId) => {
+    const previous = members;
 
     // Optimistic update: remove it from the list immediately since it
     // no longer matches the followUpCompleted === false query
-    setVisitors((prev) => prev.filter((v) => v.id !== visitorId));
-    setUpdatingId(visitorId);
+    setMembers((prev) => prev.filter((m) => m.id !== memberId));
+    setUpdatingId(memberId);
 
     try {
-      await updateDoc(doc(db, "visitors", visitorId), {
+      await updateDoc(doc(db, "members", memberId), {
         followUpCompleted: true,
       });
       toast.success("Follow-up marked complete.");
     } catch (error) {
       console.error("Error completing follow-up:", error);
       toast.error("Failed to update. Please try again.");
-      setVisitors(previous); // roll back
+      setMembers(previous); // roll back
     } finally {
       setUpdatingId(null);
     }
@@ -139,7 +139,7 @@ export default function FollowUps() {
           Follow Ups
         </h1>
         <p className="text-slate-500 mt-1 text-sm md:text-base">
-          Visitors who still need a follow-up.
+          Members who still need a follow-up.
         </p>
       </div>
 
@@ -148,48 +148,48 @@ export default function FollowUps() {
 
           {loading ? (
             <p className="text-sm text-slate-500">Loading...</p>
-          ) : visitors.length === 0 ? (
+          ) : members.length === 0 ? (
             <p className="text-sm text-slate-500">
               No pending follow-ups. You're all caught up.
             </p>
           ) : (
             <div className="divide-y divide-slate-100">
-              {visitors.map((visitor) => (
-                <div key={visitor.id} className="py-5 space-y-3">
+              {members.map((member) => (
+                <div key={member.id} className="py-5 space-y-3">
 
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                     <div className="min-w-0">
                       <p className="font-medium text-slate-800 break-words">
-                        {visitor.fullName || "Unnamed Visitor"}
+                        {member.fullName || "Unnamed Visitor"}
                       </p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
-                        {visitor.phone && (
+                        {member.phone && (
                           <span className="flex items-center gap-1.5">
                             <Phone size={13} />
-                            {visitor.phone}
+                            {member.phone}
                           </span>
                         )}
-                        {visitor.address && (
+                        {member.address && (
                           <span className="flex items-center gap-1.5 break-words">
                             <MapPin size={13} className="shrink-0" />
-                            {visitor.address}
+                            {member.address}
                           </span>
                         )}
                       </div>
-                      {visitor.prayerRequest && (
+                      {member.prayerRequest && (
                         <p className="text-sm text-slate-400 mt-1 italic max-w-md break-words">
-                          "{visitor.prayerRequest}"
+                          "{member.prayerRequest}"
                         </p>
                       )}
                     </div>
 
                     <span
                       className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap self-start ${
-                        STATUS_COLORS[visitor.followUpStatus] ||
+                        STATUS_COLORS[member.followUpStatus] ||
                         "bg-slate-100 text-slate-600"
                       }`}
                     >
-                      {visitor.followUpStatus || DEFAULT_STATUS}
+                      {member.followUpStatus || DEFAULT_STATUS}
                     </span>
                   </div>
 
@@ -197,11 +197,11 @@ export default function FollowUps() {
 
                     <div className="relative w-full xs:w-auto">
                       <select
-                        value={visitor.followUpStatus || DEFAULT_STATUS}
+                        value={member.followUpStatus || DEFAULT_STATUS}
                         onChange={(e) =>
-                          handleStatusChange(visitor.id, e.target.value)
+                          handleStatusChange(member.id, e.target.value)
                         }
-                        disabled={updatingId === visitor.id}
+                        disabled={updatingId === member.id}
                         className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 w-full xs:w-auto"
                       >
                         {STATUS_OPTIONS.map((option) => (
@@ -217,19 +217,19 @@ export default function FollowUps() {
                     </div>
 
                     <button
-                      onClick={() => markFollowUpComplete(visitor.id)}
+                      onClick={() => markFollowUpComplete(member.id)}
                       disabled={
-                        updatingId === visitor.id || !isStatusUpdated(visitor)
+                        updatingId === member.id || !isStatusUpdated(member)
                       }
                       title={
-                        !isStatusUpdated(visitor)
+                        !isStatusUpdated(member)
                           ? "Update the follow-up status before marking complete"
                           : undefined
                       }
                       className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-50 w-full xs:w-auto"
                     >
                       <CheckCircle2 size={16} />
-                      {updatingId === visitor.id
+                      {updatingId === member.id
                         ? "Updating..."
                         : "Follow-up Complete"}
                     </button>

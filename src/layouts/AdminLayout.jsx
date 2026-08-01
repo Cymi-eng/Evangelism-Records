@@ -1,215 +1,493 @@
-import { useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import {
-  LayoutDashboard,
-  BarChart3,
-  Users as UsersIcon,
-  ClipboardList,
-  LogOut,
-  Menu,
-  X,
+  Users,
+  Sparkles,
+  CalendarCheck,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
 
-import { useAuth } from "@/context/AuthContext";
+import { db } from "@/config/firebase";
+import { Card, CardContent } from "@/components/ui/card";
 
-/**
- * DESIGN NOTES
- * ------------
- * Palette
- *   navy          #101B3D   sidebar ground + headings on white
- *   navy-panel    #1B2A5C   raised surface for hover/active rows
- *   white         #FFFFFF   main content ground
- *   red           #E11D2E   primary energy — crest mark, logout, small alerts
- *   electric-blue #2F6FED   interactive accent — active nav state, focus rings, links
- *   slate-muted   #94A3C4   secondary sidebar text
- *
- * Type
- *   Display: 'Fraunces' for the wordmark/page titles — gives it presence
- *            without going full corporate-sans. Add to index.html <head>:
- *              <link rel="preconnect" href="https://fonts.googleapis.com">
- *              <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
- *   Body/UI: Inter throughout the nav and functional chrome.
- *
- * Signature element
- *   The crest mark pairs the two accents directly — an electric-blue arch
- *   with a red core — so the two liveliest colors in the palette meet in one
- *   spot instead of competing across the whole page. Everything else stays
- *   disciplined: red is reserved for "leaving/alerts," blue for "active/here."
- */
+// Aligned with AdminLayout's palette: navy + white + red + electric blue.
+const NAVY = "#101B3D";
+const NAVY_PANEL = "#1B2A5C";
+const BLUE_LIGHT = "#2F6FED"; // electric blue — was #5B8DEF
+const RED = "#E11D2E"; // was #B42D3A
 
-const navItems = [
-  { label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
-  { label: "Converts", path: "/admin/converts", icon: ClipboardList, end: false },
-  { label: "Reports", path: "/admin/reports", icon: BarChart3, end: false },
-  { label: "Users", path: "/admin/users", icon: UsersIcon, end: false },
-];
-
-function CrestMark() {
-  return (
-    <div className="relative w-11 h-11 shrink-0">
-      <svg viewBox="0 0 44 44" className="absolute inset-0" aria-hidden="true">
-        <defs>
-          <linearGradient id="crestGlow" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#2F6FED" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#2F6FED" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M4 40 V20 C4 9 12 3 22 3 C32 3 40 9 40 20 V40"
-          fill="url(#crestGlow)"
-          stroke="#2F6FED"
-          strokeOpacity="0.7"
-          strokeWidth="1"
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-2.5 h-2.5 rounded-full bg-[#E11D2E]" />
-      </div>
-    </div>
-  );
+function getLastNDays(n) {
+  const days = [];
+  const now = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    d.setHours(0, 0, 0, 0);
+    days.push(d);
+  }
+  return days;
 }
 
-export default function AdminLayout() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+function formatDayLabel(date) {
+  return date.toLocaleDateString(undefined, { weekday: "short" });
+}
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast.success("Logged out successfully.");
-      navigate("/");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to log out.");
-    }
-  };
+const STATUS_COLORS = {
+  "Still Following Up": "#94a3b8",
+  "Called": BLUE_LIGHT,
+  "Visited": "#a855f7",
+  "Came to Church": "#10b981",
+  "Not Reachable": RED,
+  "Attended Church": "#10b981",
+  "Transferred to Discipleship": "#d97706",
+};
+
+export default function AdminDashboard() {
+  const [members, setMembers] = useState([]);
+  const [sheets, setSheets] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
+  const [loadingSheets, setLoadingSheets] = useState(true);
+
+  useEffect(() => {
+    const membersRef = collection(db, "members");
+    const membersQuery = query(membersRef, orderBy("createdAt", "desc"));
+
+    const unsubscribe = onSnapshot(
+      membersQuery,
+      (snapshot) => {
+        const data = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+        setMembers(data);
+        setLoadingMembers(false);
+      },
+      (error) => {
+        console.error("Error loading members:", error);
+        setLoadingMembers(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const sheetsRef = collection(db, "evangelismSheets");
+
+    const unsubscribe = onSnapshot(
+      sheetsRef,
+      (snapshot) => {
+        const data = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+        setSheets(data);
+        setLoadingSheets(false);
+      },
+      (error) => {
+        console.error("Error loading sheets:", error);
+        setLoadingSheets(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  const sheetsById = useMemo(() => {
+    const map = {};
+    sheets.forEach((sheet) => {
+      map[sheet.id] = sheet;
+    });
+    return map;
+  }, [sheets]);
+
+  const loading = loadingMembers || loadingSheets;
+
+  const totalMembers = members.length;
+  const acceptedJesus = members.filter((m) => m.acceptedJesus === "Yes").length;
+  const promisedToCome = members.filter((m) => m.willCome === "Yes").length;
+  const completedFollowUps = members.filter((m) => m.followUpCompleted).length;
+  const pendingFollowUps = totalMembers - completedFollowUps;
+
+  const stats = [
+    { label: "Total Souls", value: totalMembers, icon: Users },
+    { label: "Accepted Jesus", value: acceptedJesus, icon: Sparkles, accent: BLUE_LIGHT },
+    { label: "Promised to Come", value: promisedToCome, icon: CalendarCheck },
+    { label: "Completed Follow-ups", value: completedFollowUps, icon: CheckCircle2 },
+    { label: "Pending Follow-ups", value: pendingFollowUps, icon: Clock, accent: RED },
+  ];
+
+  const recentMembers = members.slice(0, 8);
+
+  // --- Weekly members (custom bar column, no chart library) ---
+
+  const last7Days = getLastNDays(7);
+  const dailyData = last7Days.map((day) => {
+    const nextDay = new Date(day);
+    nextDay.setDate(day.getDate() + 1);
+    const count = members.filter((m) => {
+      if (!m.createdAt?.toDate) return false;
+      const created = m.createdAt.toDate();
+      return created >= day && created < nextDay;
+    }).length;
+    return { day: formatDayLabel(day), members: count };
+  });
+  const maxDaily = Math.max(...dailyData.map((d) => d.members), 1);
+  const weekTotal = dailyData.reduce((sum, d) => sum + d.members, 0);
+
+  // --- Accepted Jesus (progress ring, no pie chart) ---
+
+  const acceptedPct =
+    totalMembers === 0 ? 0 : Math.round((acceptedJesus / totalMembers) * 100);
+  const ringRadius = 52;
+  const circumference = 2 * Math.PI * ringRadius;
+  const ringDash = (acceptedPct / 100) * circumference;
+
+  // --- Follow-up status (stacked ledger bar, no chart library) ---
+
+  const statusCounts = members.reduce((acc, m) => {
+    const key = m.followUpStatus || "Still Following Up";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const statusData = Object.entries(statusCounts)
+    .map(([status, count]) => ({ status, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // --- Top leaders (ranked ledger, no chart library) ---
+
+  const leaderCounts = members.reduce((acc, m) => {
+    const sheet = sheetsById[m.sheetId];
+    const name = sheet?.leaderName || "Unknown Leader";
+    acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {});
+
+  const leaderData = Object.entries(leaderCounts)
+    .map(([leaderName, count]) => ({ leaderName, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+
+  const maxLeaderCount = Math.max(...leaderData.map((l) => l.count), 1);
 
   return (
-    <div className="min-h-screen bg-white flex font-sans">
+    <div className="space-y-8">
 
-      {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between bg-[#101B3D] border-b-2 border-[#E11D2E] px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center rounded-full border border-[#2F6FED]/50 bg-[#1B2A5C]">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#E11D2E]" />
-          </div>
-          <div className="leading-tight">
-            <p className="font-['Fraunces',serif] font-semibold text-white text-[15px] tracking-wide">
-              City Mega Church
-            </p>
-            <p className="text-[9px] uppercase tracking-[0.2em] text-[#94A3C4]">
-              Admin Panel
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="p-2 text-[#94A3C4] hover:text-white hover:bg-white/5 rounded-md transition-colors"
-          aria-label="Open menu"
-        >
-          <Menu size={20} />
-        </button>
+      <div>
+        <h1 className="font-['Fraunces',serif] text-2xl font-semibold" style={{ color: NAVY }}>
+          Admin Overview
+        </h1>
+        <p className="text-slate-500 mt-1">
+          Church-wide evangelism records at a glance.
+        </p>
       </div>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <aside
-        className={`w-72 bg-[#101B3D] flex flex-col fixed h-screen z-50 transition-transform duration-200 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
-      >
-        <div className="flex items-center justify-between gap-3 px-6 py-7 border-b border-white/10">
-          <div className="flex items-center gap-3.5">
-            <CrestMark />
-            <div>
-              <p className="font-['Fraunces',serif] font-semibold text-white text-[17px] leading-tight tracking-wide">
-                City Mega Church
-              </p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#94A3C4] mt-1">
-                Admin Panel
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="md:hidden p-1 text-[#94A3C4] hover:text-white hover:bg-white/5 rounded-md transition-colors"
-            aria-label="Close menu"
+      {/* Stats — report-style figures, not colored icon tiles */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {stats.map(({ label, value, icon: Icon, accent }) => (
+          <Card
+            key={label}
+            className="border border-slate-200 shadow-none rounded-md"
+            style={accent ? { borderLeft: `3px solid ${accent}` } : undefined}
           >
-            <X size={20} />
-          </button>
-        </div>
-
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
-          <p className="px-4 pb-3 text-[10px] uppercase tracking-[0.2em] text-[#4C5A85] font-medium">
-            Menu
-          </p>
-          {navItems.map(({ label, path, icon: Icon, end }) => (
-            <NavLink
-              key={path}
-              to={path}
-              end={end}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `group relative flex items-center gap-3 pl-4 pr-4 py-2.5 rounded-r-sm text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-[#1B2A5C] text-white"
-                    : "text-[#94A3C4] hover:text-white hover:bg-white/[0.04]"
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <span
-                    className={`absolute left-0 top-1 bottom-1 w-[3px] rounded-full transition-colors ${
-                      isActive ? "bg-[#2F6FED]" : "bg-transparent"
-                    }`}
-                  />
-                  <Icon
-                    size={17}
-                    className={isActive ? "text-[#2F6FED]" : "text-[#4C5A85] group-hover:text-[#94A3C4]"}
-                  />
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-slate-500">
                   {label}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="px-4 py-5 border-t border-white/10">
-          <div className="flex items-center gap-3 px-2 mb-4">
-            <div className="w-9 h-9 rounded-full bg-[#1B2A5C] border border-[#2F6FED]/50 flex items-center justify-center text-xs font-semibold text-[#2F6FED] uppercase shrink-0">
-              {user?.email ? user.email.charAt(0) : "A"}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user?.email}
+                </p>
+                <Icon size={16} className="text-slate-400" />
+              </div>
+              <p className="font-['Fraunces',serif] text-3xl font-semibold tabular-nums" style={{ color: NAVY }}>
+                {loading ? "—" : value}
               </p>
-              <p className="text-[9px] uppercase tracking-[0.2em] text-[#4C5A85]">
-                Administrator
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Row 1 — weekly bars + accepted ring */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <Card className="border border-slate-200 shadow-none rounded-md lg:col-span-2">
+          <CardContent className="p-6">
+            <div className="flex items-baseline justify-between mb-6">
+              <h2 className="font-['Fraunces',serif] text-lg font-semibold" style={{ color: NAVY }}>
+                Souls Recorded — Last 7 Days
+              </h2>
+              <p className="text-sm text-slate-500 tabular-nums">
+                {loading ? "" : `${weekTotal} total`}
               </p>
             </div>
-          </div>
 
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium text-[#FF8A93] hover:bg-[#E11D2E]/15 hover:text-white transition-colors"
-          >
-            <LogOut size={17} />
-            Logout
-          </button>
-        </div>
-      </aside>
+            {loading ? (
+              <p className="text-sm text-slate-500">Loading...</p>
+            ) : (
+              <div className="flex items-end gap-3 border-b border-slate-200 pb-3" style={{ height: 190 }}>
+                {dailyData.map((d, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center justify-end gap-2 h-full">
+                    <span className="text-xs font-semibold text-slate-700 tabular-nums">
+                      {d.members}
+                    </span>
+                    <div
+                      className="w-full max-w-[28px] rounded-t-sm transition-all"
+                      style={{
+                        height: `${Math.max((d.members / maxDaily) * 130, 4)}px`,
+                        backgroundColor: i === dailyData.length - 1 ? RED : BLUE_LIGHT,
+                      }}
+                    />
+                    <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                      {d.day}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <main className="flex-1 md:ml-72 p-4 md:p-8 pt-20 md:pt-8">
-        <Outlet />
-      </main>
+        <Card className="border border-slate-200 shadow-none rounded-md">
+          <CardContent className="p-6 flex flex-col items-center">
+            <h2 className="font-['Fraunces',serif] text-lg font-semibold self-start mb-6" style={{ color: NAVY }}>
+              Accepted Jesus
+            </h2>
+
+            {loading ? (
+              <p className="text-sm text-slate-500">Loading...</p>
+            ) : totalMembers === 0 ? (
+              <p className="text-sm text-slate-500">No data yet.</p>
+            ) : (
+              <>
+                <div className="relative w-40 h-40">
+                  <svg viewBox="0 0 140 140" className="w-40 h-40 -rotate-90">
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r={ringRadius}
+                      stroke="#e2e8f0"
+                      strokeWidth="12"
+                      fill="none"
+                    />
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r={ringRadius}
+                      stroke={BLUE_LIGHT}
+                      strokeWidth="12"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeDasharray={`${ringDash} ${circumference}`}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="font-['Fraunces',serif] text-3xl font-semibold tabular-nums" style={{ color: NAVY }}>
+                      {acceptedPct}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="w-full mt-6 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-slate-600">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BLUE_LIGHT }} />
+                      Accepted
+                    </span>
+                    <span className="font-medium text-slate-800 tabular-nums">{acceptedJesus}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-slate-600">
+                      <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                      Not Yet
+                    </span>
+                    <span className="font-medium text-slate-800 tabular-nums">
+                      {totalMembers - acceptedJesus}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+      </div>
+
+      {/* Row 2 — status ledger + leaders ledger */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <Card className="border border-slate-200 shadow-none rounded-md">
+          <CardContent className="p-6">
+            <h2 className="font-['Fraunces',serif] text-lg font-semibold mb-5" style={{ color: NAVY }}>
+              Follow-up Status Breakdown
+            </h2>
+
+            {loading ? (
+              <p className="text-sm text-slate-500">Loading...</p>
+            ) : statusData.length === 0 ? (
+              <p className="text-sm text-slate-500">No data yet.</p>
+            ) : (
+              <>
+                <div className="w-full h-3 rounded-full overflow-hidden flex mb-5">
+                  {statusData.map((entry) => (
+                    <div
+                      key={entry.status}
+                      style={{
+                        width: `${(entry.count / totalMembers) * 100}%`,
+                        backgroundColor: STATUS_COLORS[entry.status] || "#94a3b8",
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className="divide-y divide-slate-100">
+                  {statusData.map((entry) => (
+                    <div key={entry.status} className="flex items-center justify-between py-2.5">
+                      <span className="flex items-center gap-2.5 text-sm text-slate-700">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: STATUS_COLORS[entry.status] || "#94a3b8" }}
+                        />
+                        {entry.status}
+                      </span>
+                      <span className="text-sm text-slate-500 tabular-nums">
+                        {entry.count} · {Math.round((entry.count / totalMembers) * 100)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-slate-200 shadow-none rounded-md">
+          <CardContent className="p-6">
+            <h2 className="font-['Fraunces',serif] text-lg font-semibold mb-5" style={{ color: NAVY }}>
+              Top Leaders by Souls Recorded
+            </h2>
+
+            {loading ? (
+              <p className="text-sm text-slate-500">Loading...</p>
+            ) : leaderData.length === 0 ? (
+              <p className="text-sm text-slate-500">No data yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {leaderData.map((leader, index) => (
+                  <div key={leader.leaderName}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="flex items-center gap-2.5 text-sm text-slate-700">
+                        <span className="font-['Fraunces',serif] text-xs text-slate-400 tabular-nums w-4">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        {leader.leaderName}
+                      </span>
+                      <span className="text-sm font-medium text-slate-800 tabular-nums">
+                        {leader.count}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden ml-6">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${(leader.count / maxLeaderCount) * 100}%`,
+                          backgroundColor: index === 0 ? RED : BLUE_LIGHT,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+      </div>
+
+      {/* Recent members */}
+      <Card className="border border-slate-200 shadow-none rounded-md">
+        <CardContent className="p-0">
+
+          <h2 className="font-['Fraunces',serif] text-lg font-semibold px-6 pt-6 mb-4" style={{ color: NAVY }}>
+            Recent Souls Recorded
+          </h2>
+
+          {loading ? (
+            <p className="text-sm text-slate-500 px-6 pb-6">Loading...</p>
+          ) : recentMembers.length === 0 ? (
+            <p className="text-sm text-slate-500 px-6 pb-6">
+              No Souls recorded yet.
+            </p>
+          ) : (
+            <table className="w-full text-sm md:table-fixed">
+              <thead className="hidden md:table-header-group">
+                <tr className="border-b border-slate-200">
+                  <th className="text-left font-medium text-[11px] uppercase tracking-wide text-slate-400 px-6 py-3">
+                    Name
+                  </th>
+                  <th className="text-left font-medium text-[11px] uppercase tracking-wide text-slate-400 px-3 py-3">
+                    Phone
+                  </th>
+                  <th className="text-left font-medium text-[11px] uppercase tracking-wide text-slate-400 px-3 py-3">
+                    Salvation
+                  </th>
+                  <th className="text-left font-medium text-[11px] uppercase tracking-wide text-slate-400 px-6 py-3">
+                    Follow-up
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="block md:table-row-group divide-y divide-slate-100 md:divide-y-0">
+                {recentMembers.map((member) => (
+                  <tr
+                    key={member.id}
+                    className="block md:table-row py-3 md:py-0 px-6 md:px-0 border-b md:border-0 border-slate-100"
+                  >
+                    <td className="block md:table-cell px-0 md:px-6 py-1 md:py-4 before:content-['Name'] before:block before:text-[10px] before:font-medium before:uppercase before:tracking-wide before:text-slate-400 md:before:content-none">
+                      <p className="font-medium text-slate-800">
+                        {member.fullName || "Unnamed Visitor"}
+                      </p>
+                    </td>
+                    <td className="block md:table-cell px-0 md:px-3 py-1 md:py-4 before:content-['Phone'] before:block before:text-[10px] before:font-medium before:uppercase before:tracking-wide before:text-slate-400 md:before:content-none">
+                      <span className="text-slate-500">
+                        {member.phone || "No phone provided"}
+                      </span>
+                    </td>
+                    <td className="block md:table-cell px-0 md:px-3 py-1 md:py-4 before:content-['Salvation'] before:block before:text-[10px] before:font-medium before:uppercase before:tracking-wide before:text-slate-400 md:before:content-none">
+                      <span
+                        className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${
+                          member.acceptedJesus === "Yes"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {member.acceptedJesus === "Yes" ? "Accepted" : "Not Yet"}
+                      </span>
+                    </td>
+                    <td className="block md:table-cell px-0 md:px-6 py-1 md:py-4 before:content-['Follow-up'] before:block before:text-[10px] before:font-medium before:uppercase before:tracking-wide before:text-slate-400 md:before:content-none">
+                      <span
+                        className="inline-block text-xs font-medium px-2.5 py-1 rounded-full"
+                        style={
+                          member.followUpCompleted
+                            ? { backgroundColor: `${BLUE_LIGHT}1A`, color: BLUE_LIGHT }
+                            : { backgroundColor: `${RED}1A`, color: RED }
+                        }
+                      >
+                        {member.followUpCompleted ? "Completed" : "Pending"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+        </CardContent>
+      </Card>
+
     </div>
   );
 }

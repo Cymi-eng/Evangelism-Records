@@ -136,7 +136,7 @@ export default function NewSheet() {
     try {
       setSavingVisitor(true);
 
-      await addDoc(collection(db, "visitors"), {
+      await addDoc(collection(db, "members"), {
         sheetId,
         fullName: visitor.fullName.trim(),
         phone: visitor.phone.trim(),
