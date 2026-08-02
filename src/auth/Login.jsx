@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Eye, EyeOff, Church } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/config/firebase";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,25 +30,14 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const userCredential = await login(email, password);
-      const uid = userCredential.user.uid;
+      await login(email, password);
 
-      const userDoc = await getDoc(doc(db, "users", uid));
-
-      if (!userDoc.exists()) {
-        toast.error("User record not found.");
-        return;
-      }
-
-      const userData = userDoc.data();
-
-      toast.success(`Welcome ${userData.fullName}!`);
-
-      if (userData.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/leader");
-      }
+      // Role isn't fetched here anymore — AuthContext already fetches it
+      // in the background the moment auth succeeds, and AppRoutes waits
+      // on that to redirect to the right place. This avoids a second,
+      // redundant Firestore read before navigation even starts.
+      toast.success("Welcome back!");
+      navigate("/");
     } catch (error) {
       console.error(error);
       toast.error("Invalid email or password.");
@@ -116,6 +103,13 @@ export default function Login() {
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
+
+          <div className="mt-4 text-center text-sm text-slate-600">
+            Don&apos;t have an account?{" "}
+            <Link to="/register" className="text-blue-600 hover:underline font-medium">
+              Register
+            </Link>
+          </div>
 
           <div className="mt-8 text-center text-sm text-blue-500">
             © {new Date().getFullYear()} City Mega Church
