@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 import Login from "@/auth/Login";
+import Register from "@/auth/Register";
 
 import LeaderLayout from "@/layouts/LeaderLayout";
 import LeaderDashboard from "@/leader/Dashboard";
@@ -19,21 +20,13 @@ import Users from "@/pages/admin/Users";
 export default function AppRoutes() {
   const { user, role, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
-      </div>
-    );
-  }
-
   return (
     <Routes>
       {/* Login */}
       <Route
         path="/"
         element={
-          !user ? (
+          loading ? null : !user ? (
             <Login />
           ) : role === "admin" ? (
             <Navigate to="/admin" replace />
@@ -55,11 +48,17 @@ export default function AppRoutes() {
         }
       />
 
+      {/* Register */}
+      <Route
+        path="/register"
+        element={!user ? <Register /> : <Navigate to="/" replace />}
+      />
+
       {/* Leader */}
       <Route
         path="/leader"
         element={
-          user && role === "leader" ? (
+          loading ? null : user && role === "leader" ? (
             <LeaderLayout />
           ) : (
             <Navigate to="/" replace />
@@ -77,7 +76,7 @@ export default function AppRoutes() {
       <Route
         path="/admin"
         element={
-          user && role === "admin" ? (
+          loading ? null : user && role === "admin" ? (
             <AdminLayout />
           ) : (
             <Navigate to="/" replace />
@@ -85,7 +84,7 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<AdminDashboard />} />
-       <Route path="members" element={<Members />} />
+        <Route path="members" element={<Members />} />
         <Route path="users" element={<Users />} />
       </Route>
 
