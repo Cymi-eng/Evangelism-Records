@@ -193,30 +193,6 @@ export default function Register() {
             />
           </div>
 
-          <div>
-            <Label>Role</Label>
-            <div className="flex gap-3 mt-2">
-              {["leader", "admin"].map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => setRole(option)}
-                  className={`flex-1 h-11 rounded-lg text-sm font-medium border capitalize transition-colors ${
-                    role === option
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-slate-400 mt-2">
-              Remove this selector before going live — see the note at the
-              top of Register.jsx.
-            </p>
-          </div>
-
           <Button
             type="submit"
             className="w-full h-11 bg-blue-600 hover:bg-blue-700"
